@@ -2,6 +2,8 @@ import torch
 import numpy as np
 from scipy.stats import spearmanr
 from PIL import Image
+import cv2
+
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 HUMAN_SPEARMAN_CEILING = 0.65753
@@ -48,3 +50,24 @@ def evaluate_clickme(model, explainer=None, clickme_val_dataset=None, preprocess
         spearman_scores.extend(spearman_batch)
     alignment_score = np.mean(spearman_scores) / HUMAN_SPEARMAN_CEILING
     return alignment_score
+
+
+def get_superimposed(method, cam_model, test_img_path, preprocess):
+    # get and preprocess image example
+    test_img = Image.open(test_img_path)
+    numpy_img = np.array(test_img)
+    processed_image = preprocess(test_img).unsqueeze(0).to(device)
+
+    # Get the predicted class index
+    logits = cam_model(processed_image)
+    _, predicted_class = torch.max(logits, 1)
+    # Create a one-hot encoded vector
+    one_hot = torch.zeros_like(logits)
+    one_hot[:, predicted_class] = 1
+
+    img = cv2.resize(numpy_img, (224, 224))
+    heatmap = method(processed_image, one_hot, cam_model)[0].cpu().numpy()
+    heatmap = cv2.normalize(heatmap, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    superimposed_img = cv2.addWeighted(img, 0.4, heatmap, 0.6, 0)
+    return superimposed_img
