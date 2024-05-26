@@ -3,10 +3,11 @@ import torch
 import torch.nn as nn
 
 
+
 class FastvitGradCAM(nn.Module):
+
     def __init__(self, model):
         super(FastvitGradCAM, self).__init__()
-
         self.model = model
         # Placeholder for the gradients
         self.gradients = None
@@ -28,6 +29,7 @@ class FastvitGradCAM(nn.Module):
         # for image classification
         x = self.model.conv_exp(x)
         self.activations = x
+        h = x.register_hook(self.activations_hook)
         x = self.model.gap(x)
         x = x.view(x.size(0), -1)
         cls_out = self.model.head(x)
@@ -38,5 +40,5 @@ class FastvitGradCAM(nn.Module):
         return self.gradients
 
     # Method for the activation extraction
-    def get_activations(self):
+    def get_activations(self, x):
         return self.activations
