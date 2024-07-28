@@ -1,4 +1,3 @@
-
 # import timm
 # from timm.data import resolve_data_config
 # from timm.data.transforms_factory import create_transform
@@ -11,10 +10,11 @@ from ClickMe_dataset.clickMe import load_clickme_val
 
 
 import pathlib
+
 temp = pathlib.PosixPath
 pathlib.PosixPath = pathlib.WindowsPath
-model_name = "fastvit_sa24"
-model, model_cam, transform = get_model(model_name,dcls_equipped=True, pretrained=True)
+model_name = "convnext_tiny"
+model, model_cam, transform = get_model(model_name, dcls_equipped=True, pretrained=True)
 #model = timm.create_model(model_name, pretrained=True).to(device)#convformer_s18, convnext_tiny, caformer_s18, fastvit_sa24  ##### 'fastvit_sa36' 'efficientnet_b5'
 #model.eval()
 # (ii) the preprocessing
@@ -23,11 +23,12 @@ model, model_cam, transform = get_model(model_name,dcls_equipped=True, pretraine
 explainer = threshold_grad_cam
 
 batch_size = 4
-batches = int(52224/batch_size)
+batches = int(52224 / batch_size)
 # now let's load the dataset
 clickme_dataset = load_clickme_val(batch_size)
 
 #Get interpretability score
-score = evaluate_clickme(model_cam, explainer=explainer, clickme_val_dataset=clickme_dataset.take(10), preprocess_inputs=transform)
+score = evaluate_clickme(model_cam, explainer=explainer, clickme_val_dataset=clickme_dataset.take(10),
+                         preprocess_inputs=transform)
 
 print(score)

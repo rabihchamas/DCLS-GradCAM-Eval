@@ -134,3 +134,49 @@ class LayerNorm(nn.Module):
             x = (x - u) / torch.sqrt(s + self.eps)
             x = self.weight[:, None, None] * x + self.bias[:, None, None]
             return x
+
+
+model_urls = {
+    "convnext_tiny_1k": "https://dl.fbaipublicfiles.com/convnext/convnext_tiny_1k_224_ema.pth",
+    "convnext_dcls_gauss_tiny_1k": "https://zenodo.org/record/8029747/files/convnext_dcls_gauss_tiny_1k_224_ema.pth",
+    "convnext_dcls_v0_tiny_1k": "https://zenodo.org/record/7112021/files/convnext_dcls_tiny_1k_224_ema.pth",
+    "convnext_base_1k": "https://dl.fbaipublicfiles.com/convnext/convnext_base_1k_224_ema.pth",
+    "convnext_dcls_base_1k": "https://zenodo.org/record/7112021/files/convnext_dcls_base_1k_224_ema.pth",
+    "convnext_dcls_small_1k": "https://zenodo.org/record/7112021/files/convnext_dcls_small_1k_224_ema.pth",
+    "convnext_small_1k": "https://dl.fbaipublicfiles.com/convnext/convnext_small_1k_224_ema.pth"
+}
+
+def load_checkpoint(model, checkpoint_name='convnext_tiny_1k'):
+    url = model_urls[checkpoint_name]
+    checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+    print(model.load_state_dict(checkpoint["model"]))
+
+def convnext_tiny(pretrained=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], **kwargs)
+    if pretrained:
+        url = model_urls['convnext_tiny_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu", check_hash=True)
+        model.load_state_dict(checkpoint["model"])
+    return model
+
+def convnext_base(pretrained=False, in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 27, 3], dims=[128, 256, 512, 1024], **kwargs)
+    if pretrained:
+        url = model_urls['convnext_base_22k'] if in_22k else model_urls['convnext_base_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu")
+        model.load_state_dict(checkpoint["model"])
+    return model
+def convnext_small(pretrained=False,in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 27, 3], dims=[96, 192, 384, 768], **kwargs)
+    if pretrained:
+        url = model_urls['convnext_small_22k'] if in_22k else model_urls['convnext_small_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu")
+        model.load_state_dict(checkpoint["model"])
+    return model
+def convnext_large(pretrained=False, in_22k=False, **kwargs):
+    model = ConvNeXt(depths=[3, 3, 27, 3], dims=[192, 384, 768, 1536], **kwargs)
+    if pretrained:
+        url = model_urls['convnext_large_22k'] if in_22k else model_urls['convnext_large_1k']
+        checkpoint = torch.hub.load_state_dict_from_url(url=url, map_location="cpu")
+        model.load_state_dict(checkpoint["model"])
+    return model
