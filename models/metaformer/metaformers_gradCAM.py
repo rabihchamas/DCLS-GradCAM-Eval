@@ -1,11 +1,10 @@
-import torch
 import torch.nn as nn
 
 
-class FastvitGradCAM(nn.Module):
+class MetaformerGradCAM(nn.Module):
 
     def __init__(self, model):
-        super(FastvitGradCAM, self).__init__()
+        super(MetaformerGradCAM, self).__init__()
         self.model = model
         # Placeholder for the gradients
         self.gradients = None
@@ -16,22 +15,18 @@ class FastvitGradCAM(nn.Module):
     def activations_hook(self, grad):
         self.gradients = grad
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        # input embedding
-        x = self.model.forward_embeddings(x)
-        # through backbone
-        x = self.model.forward_tokens(x)
-        if self.model.fork_feat:
-            # output features of four stages for dense prediction
-            return x
-        # for image classification
-        x = self.model.conv_exp(x)
+    def forward_features(self, x):
+        for i in range(self.model.num_stage):
+            x = self.model.downsample_layers[i](x)
+            x = self.model.stages[i](x)
         self.activations = x
         h = x.register_hook(self.activations_hook)
-        x = self.model.gap(x)
-        x = x.view(x.size(0), -1)
-        cls_out = self.model.head(x)
-        return cls_out
+        return self.model.norm(x.mean([1, 2]))  # (B, H, W, C) -> (B, C)
+
+    def forward(self, x):
+        x = self.forward_features(x)
+        x = self.model.head(x)
+        return x
 
     # Method for the gradient extraction
     def get_activations_gradient(self):

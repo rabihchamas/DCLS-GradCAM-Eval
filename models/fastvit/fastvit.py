@@ -1,7 +1,3 @@
-#
-# For licensing see accompanying LICENSE file.
-# Copyright (C) 2023 Apple Inc. All Rights Reserved.
-#
 import os
 import copy
 from functools import partial
@@ -14,11 +10,8 @@ from timm.data import IMAGENET_DEFAULT_MEAN, IMAGENET_DEFAULT_STD
 from timm.models.layers import DropPath, trunc_normal_
 from timm.models.registry import register_model
 
-from models.fastvit.dcls_utils import replace_depthwise_dcls
-
 from models.fastvit.modules.mobileone import MobileOneBlock
 from models.fastvit.modules.replknet import ReparamLargeKernelConv
-from pathlib import Path
 
 try:
     from mmseg.models.builder import BACKBONES as seg_BACKBONES
@@ -64,7 +57,7 @@ default_cfgs = {
 
 
 def convolutional_stem(
-        in_channels: int, out_channels: int, inference_mode: bool = False
+    in_channels: int, out_channels: int, inference_mode: bool = False
 ) -> nn.Sequential:
     """Build convolutional stem with MobileOne blocks.
 
@@ -121,12 +114,12 @@ class MHSA(nn.Module):
     """
 
     def __init__(
-            self,
-            dim: int,
-            head_dim: int = 32,
-            qkv_bias: bool = False,
-            attn_drop: float = 0.0,
-            proj_drop: float = 0.0,
+        self,
+        dim: int,
+        head_dim: int = 32,
+        qkv_bias: bool = False,
+        attn_drop: float = 0.0,
+        proj_drop: float = 0.0,
     ) -> None:
         """Build MHSA module that can handle 3D or 4D input tensors.
 
@@ -141,7 +134,7 @@ class MHSA(nn.Module):
         assert dim % head_dim == 0, "dim should be divisible by head_dim"
         self.head_dim = head_dim
         self.num_heads = dim // head_dim
-        self.scale = head_dim ** -0.5
+        self.scale = head_dim**-0.5
 
         self.qkv = nn.Linear(dim, dim * 3, bias=qkv_bias)
         self.attn_drop = nn.Dropout(attn_drop)
@@ -179,12 +172,12 @@ class PatchEmbed(nn.Module):
     """Convolutional patch embedding layer."""
 
     def __init__(
-            self,
-            patch_size: int,
-            stride: int,
-            in_channels: int,
-            embed_dim: int,
-            inference_mode: bool = False,
+        self,
+        patch_size: int,
+        stride: int,
+        in_channels: int,
+        embed_dim: int,
+        inference_mode: bool = False,
     ) -> None:
         """Build patch embedding layer.
 
@@ -236,12 +229,12 @@ class RepMixer(nn.Module):
     """
 
     def __init__(
-            self,
-            dim,
-            kernel_size=3,
-            use_layer_scale=True,
-            layer_scale_init_value=1e-5,
-            inference_mode: bool = False,
+        self,
+        dim,
+        kernel_size=3,
+        use_layer_scale=True,
+        layer_scale_init_value=1e-5,
+        inference_mode: bool = False,
     ):
         """Build RepMixer Module.
 
@@ -315,16 +308,16 @@ class RepMixer(nn.Module):
 
         if self.use_layer_scale:
             w = self.mixer.id_tensor + self.layer_scale.unsqueeze(-1) * (
-                    self.mixer.reparam_conv.weight - self.norm.reparam_conv.weight
+                self.mixer.reparam_conv.weight - self.norm.reparam_conv.weight
             )
             b = torch.squeeze(self.layer_scale) * (
-                    self.mixer.reparam_conv.bias - self.norm.reparam_conv.bias
+                self.mixer.reparam_conv.bias - self.norm.reparam_conv.bias
             )
         else:
             w = (
-                    self.mixer.id_tensor
-                    + self.mixer.reparam_conv.weight
-                    - self.norm.reparam_conv.weight
+                self.mixer.id_tensor
+                + self.mixer.reparam_conv.weight
+                - self.norm.reparam_conv.weight
             )
             b = self.mixer.reparam_conv.bias - self.norm.reparam_conv.bias
 
@@ -352,12 +345,12 @@ class ConvFFN(nn.Module):
     """Convolutional FFN Module."""
 
     def __init__(
-            self,
-            in_channels: int,
-            hidden_channels: Optional[int] = None,
-            out_channels: Optional[int] = None,
-            act_layer: nn.Module = nn.GELU,
-            drop: float = 0.0,
+        self,
+        in_channels: int,
+        hidden_channels: Optional[int] = None,
+        out_channels: Optional[int] = None,
+        act_layer: nn.Module = nn.GELU,
+        drop: float = 0.0,
     ) -> None:
         """Build convolutional FFN module.
 
@@ -416,11 +409,11 @@ class RepCPE(nn.Module):
     """
 
     def __init__(
-            self,
-            in_channels: int,
-            embed_dim: int = 768,
-            spatial_shape: Union[int, Tuple[int, int]] = (7, 7),
-            inference_mode=False,
+        self,
+        in_channels: int,
+        embed_dim: int = 768,
+        spatial_shape: Union[int, Tuple[int, int]] = (7, 7),
+        inference_mode=False,
     ) -> None:
         """Build reparameterizable conditional positional encoding
 
@@ -528,16 +521,16 @@ class RepMixerBlock(nn.Module):
     """
 
     def __init__(
-            self,
-            dim: int,
-            kernel_size: int = 3,
-            mlp_ratio: float = 4.0,
-            act_layer: nn.Module = nn.GELU,
-            drop: float = 0.0,
-            drop_path: float = 0.0,
-            use_layer_scale: bool = True,
-            layer_scale_init_value: float = 1e-5,
-            inference_mode: bool = False,
+        self,
+        dim: int,
+        kernel_size: int = 3,
+        mlp_ratio: float = 4.0,
+        act_layer: nn.Module = nn.GELU,
+        drop: float = 0.0,
+        drop_path: float = 0.0,
+        use_layer_scale: bool = True,
+        layer_scale_init_value: float = 1e-5,
+        inference_mode: bool = False,
     ):
         """Build RepMixer Block.
 
@@ -602,15 +595,15 @@ class AttentionBlock(nn.Module):
     """
 
     def __init__(
-            self,
-            dim: int,
-            mlp_ratio: float = 4.0,
-            act_layer: nn.Module = nn.GELU,
-            norm_layer: nn.Module = nn.BatchNorm2d,
-            drop: float = 0.0,
-            drop_path: float = 0.0,
-            use_layer_scale: bool = True,
-            layer_scale_init_value: float = 1e-5,
+        self,
+        dim: int,
+        mlp_ratio: float = 4.0,
+        act_layer: nn.Module = nn.GELU,
+        norm_layer: nn.Module = nn.BatchNorm2d,
+        drop: float = 0.0,
+        drop_path: float = 0.0,
+        use_layer_scale: bool = True,
+        layer_scale_init_value: float = 1e-5,
     ):
         """Build Attention Block.
 
@@ -665,19 +658,19 @@ class AttentionBlock(nn.Module):
 
 
 def basic_blocks(
-        dim: int,
-        block_index: int,
-        num_blocks: List[int],
-        token_mixer_type: str,
-        kernel_size: int = 3,
-        mlp_ratio: float = 4.0,
-        act_layer: nn.Module = nn.GELU,
-        norm_layer: nn.Module = nn.BatchNorm2d,
-        drop_rate: float = 0.0,
-        drop_path_rate: float = 0.0,
-        use_layer_scale: bool = True,
-        layer_scale_init_value: float = 1e-5,
-        inference_mode=False,
+    dim: int,
+    block_index: int,
+    num_blocks: List[int],
+    token_mixer_type: str,
+    kernel_size: int = 3,
+    mlp_ratio: float = 4.0,
+    act_layer: nn.Module = nn.GELU,
+    norm_layer: nn.Module = nn.BatchNorm2d,
+    drop_rate: float = 0.0,
+    drop_path_rate: float = 0.0,
+    use_layer_scale: bool = True,
+    layer_scale_init_value: float = 1e-5,
+    inference_mode=False,
 ) -> nn.Sequential:
     """Build FastViT blocks within a stage.
 
@@ -702,9 +695,9 @@ def basic_blocks(
     blocks = []
     for block_idx in range(num_blocks[block_index]):
         block_dpr = (
-                drop_path_rate
-                * (block_idx + sum(num_blocks[:block_index]))
-                / (sum(num_blocks) - 1)
+            drop_path_rate
+            * (block_idx + sum(num_blocks[:block_index]))
+            / (sum(num_blocks) - 1)
         )
         if token_mixer_type == "repmixer":
             blocks.append(
@@ -748,29 +741,29 @@ class FastViT(nn.Module):
     """
 
     def __init__(
-            self,
-            layers,
-            token_mixers: Tuple[str, ...],
-            embed_dims=None,
-            mlp_ratios=None,
-            downsamples=None,
-            repmixer_kernel_size=3,
-            norm_layer: nn.Module = nn.BatchNorm2d,
-            act_layer: nn.Module = nn.GELU,
-            num_classes=1000,
-            pos_embs=None,
-            down_patch_size=7,
-            down_stride=2,
-            drop_rate=0.0,
-            drop_path_rate=0.0,
-            use_layer_scale=True,
-            layer_scale_init_value=1e-5,
-            fork_feat=False,
-            init_cfg=None,
-            pretrained=None,
-            cls_ratio=2.0,
-            inference_mode=False,
-            **kwargs,
+        self,
+        layers,
+        token_mixers: Tuple[str, ...],
+        embed_dims=None,
+        mlp_ratios=None,
+        downsamples=None,
+        repmixer_kernel_size=3,
+        norm_layer: nn.Module = nn.BatchNorm2d,
+        act_layer: nn.Module = nn.GELU,
+        num_classes=1000,
+        pos_embs=None,
+        down_patch_size=7,
+        down_stride=2,
+        drop_rate=0.0,
+        drop_path_rate=0.0,
+        use_layer_scale=True,
+        layer_scale_init_value=1e-5,
+        fork_feat=False,
+        init_cfg=None,
+        pretrained=None,
+        cls_ratio=2.0,
+        inference_mode=False,
+        **kwargs,
     ) -> None:
 
         super().__init__()
@@ -1066,9 +1059,7 @@ def fastvit_sa24(pretrained=False, **kwargs):
     )
     model.default_cfg = default_cfgs["fastvit_s"]
     if pretrained:
-        checkpoint = torch.hub.load_state_dict_from_url(url = 'https://zenodo.org/records/8370737/files/fastvit_sa24_seed0.pth.tar', map_location="cpu", check_hash=True)
-        model_state_dict = checkpoint['state_dict_ema']
-        model.load_state_dict(model_state_dict, strict=True)
+        raise ValueError("Functionality not implemented.")
     return model
 
 
@@ -1093,10 +1084,7 @@ def fastvit_sa36(pretrained=False, **kwargs):
     )
     model.default_cfg = default_cfgs["fastvit_m"]
     if pretrained:
-        checkpoint = torch.hub.load_state_dict_from_url(
-            url='https://zenodo.org/records/8370737/files/fastvit_sa36_seed0.pth.tar', map_location="cpu", check_hash=True)
-        model_state_dict = checkpoint['state_dict_ema']
-        model.load_state_dict(model_state_dict, strict=True)
+        raise ValueError("Functionality not implemented.")
     return model
 
 
@@ -1123,65 +1111,3 @@ def fastvit_ma36(pretrained=False, **kwargs):
     if pretrained:
         raise ValueError("Functionality not implemented.")
     return model
-
-
-@register_model
-def fastvit_sa36_dcls(pretrained=False, **kwargs):
-    """Instantiate FastViT-SA36 model variant."""
-    layers = [6, 6, 18, 6]
-    embed_dims = [64, 128, 256, 512]
-    mlp_ratios = [4, 4, 4, 4]
-    downsamples = [True, True, True, True]
-    pos_embs = [None, None, None, partial(RepCPE, spatial_shape=(7, 7))]
-    token_mixers = ("repmixer", "repmixer", "repmixer", "attention")
-    model = FastViT(
-        layers,
-        embed_dims=embed_dims,
-        token_mixers=token_mixers,
-        pos_embs=pos_embs,
-        mlp_ratios=mlp_ratios,
-        downsamples=downsamples,
-        layer_scale_init_value=1e-6,
-        **kwargs,
-    )
-    model.default_cfg = default_cfgs["fastvit_m"]
-    model_dcls = replace_depthwise_dcls(copy.deepcopy(model),
-                                        dilated_kernel_size=17,
-                                        kernel_count=34, version='v1')
-    if pretrained:
-        checkpoint = torch.hub.load_state_dict_from_url(
-            url='https://zenodo.org/records/8370737/files/fastvit_sa36_v1_17lim_34el_seed0.pth.tar', map_location="cpu", check_hash=True)
-        model_state_dict = checkpoint['state_dict_ema']
-        model.load_state_dict(model_state_dict, strict=True)
-
-    return model_dcls
-
-
-@register_model
-def fastvit_sa24_dcls(pretrained=False, **kwargs):
-    """Instantiate FastViT-SA24 model variant."""
-    layers = [4, 4, 12, 4]
-    embed_dims = [64, 128, 256, 512]
-    mlp_ratios = [4, 4, 4, 4]
-    downsamples = [True, True, True, True]
-    pos_embs = [None, None, None, partial(RepCPE, spatial_shape=(7, 7))]
-    token_mixers = ("repmixer", "repmixer", "repmixer", "attention")
-    model = FastViT(
-        layers,
-        token_mixers=token_mixers,
-        embed_dims=embed_dims,
-        pos_embs=pos_embs,
-        mlp_ratios=mlp_ratios,
-        downsamples=downsamples,
-        **kwargs,
-    )
-    model.default_cfg = default_cfgs["fastvit_s"]
-    model_dcls = replace_depthwise_dcls(copy.deepcopy(model),
-                                        dilated_kernel_size=17,
-                                        kernel_count=34, version='v1')
-    if pretrained:
-        checkpoint = torch.hub.load_state_dict_from_url(
-            url='https://zenodo.org/records/8370737/files/fastvit_sa24_v1_17lim_34el_seed0.pth.tar', map_location="cpu", check_hash=True)
-        model_state_dict = checkpoint['state_dict_ema']
-        model.load_state_dict(model_state_dict, strict=True)
-    return model_dcls
