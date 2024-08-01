@@ -1,6 +1,6 @@
 from utils import evaluate_clickme
 from get_model import get_model
-from thresholding_GradCAM import threshold_grad_cam, threshold_grad_cam_metaformers
+from threshold_GradCAM import threshold_grad_cam, threshold_grad_cam_metaformers
 from GradCAM import grad_cam, grad_cam_metaformers
 from ClickMe_dataset.clickMe import load_clickme_val
 import pathlib
@@ -38,7 +38,6 @@ def main(arguments):
 
     batches = 52224 / args.batch_size
     batches = int((args.data_used_percentage / 100) * batches)
-    print(batches)
     #Get interpretability score
     score = evaluate_clickme(model_cam, explainer=explainer, clickme_val_dataset=clickme_dataset.take(batches),
                              preprocess_inputs=transform)
