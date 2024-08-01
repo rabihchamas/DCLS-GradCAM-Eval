@@ -52,6 +52,7 @@ def replace_depthwise_dcls_metaformers(
             setattr(eval("model" + name_eval), last_layer, dcls_conv)
     return model
 
+
 input_size = 224
 crop_pct = input_size / 224
 size = int(input_size / crop_pct)

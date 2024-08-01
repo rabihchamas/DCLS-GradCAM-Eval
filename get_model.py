@@ -101,11 +101,11 @@ def get_model(model_name, dcls_equipped=True, pretrained=True):
             model = caformer_s18(pretrained=False).to(device)
             model = replace_depthwise_dcls_metaformers(copy.deepcopy(model),
                                                        dilated_kernel_size=17,
-                                                       kernel_count=40, version='V1').to(device)
+                                                       kernel_count=34, version='v1').to(device)
             if pretrained:
                 url = "https://zenodo.org/records/8370737/files/caformer_s18_v1_17lim_34el_seed0.pth.tar?download=1"
                 checkpoints = torch.hub.load_state_dict_from_url(url=url, map_location=device, check_hash=True)
-                model.load_state_dict(checkpoints['state_dict_ema'])
+                model.load_state_dict(checkpoints['state_dict_ema'], strict=False)
         else:
             model = caformer_s18(pretrained=pretrained).to(device)
 
@@ -116,12 +116,12 @@ def get_model(model_name, dcls_equipped=True, pretrained=True):
         if dcls_equipped:
             model = convformer_s18(pretrained=False).to(device)
             model = replace_depthwise_dcls_metaformers(copy.deepcopy(model),
-                                                       dilated_kernel_size=17,
-                                                       kernel_count=40, version='V1').to(device)
+                                                   dilated_kernel_size=17,
+                                                   kernel_count=40, version='v1').to(device)
             if pretrained:
                 url = "https://zenodo.org/records/8370737/files/convformer_s18_v1_17lim_40el_seed0.pth.tar"
                 checkpoints = torch.hub.load_state_dict_from_url(url=url, map_location=device, check_hash=True)
-                model.load_state_dict(checkpoints['state_dict_ema'])
+                model.load_state_dict(checkpoints['state_dict_ema'], strict=True)
         else:
             model = convformer_s18(pretrained=pretrained).to(device)
 

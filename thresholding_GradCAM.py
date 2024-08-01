@@ -12,6 +12,32 @@ def normalize_batch(batch):
     return normalized_batch
 
 
+def threshold_grad_cam_metaformers(xbatch, ybatch, CAM_model):
+    pred = CAM_model(xbatch)
+    output = torch.sum(pred * ybatch)
+    output.backward()
+    gradients = CAM_model.get_activations_gradient()
+
+    # pool the gradients across the channels
+    pooled_gradients = torch.mean(gradients, dim=[1, 2])
+
+    # get the activations of the last convolutional layer
+    activations = CAM_model.get_activations(xbatch).detach()
+    # weight the channels by corresponding gradients
+    activations *= pooled_gradients.unsqueeze(1).unsqueeze(1)
+    activations = torch.relu(activations)
+    # average the channels of the activations
+    heatmap = torch.mean(activations, dim=-1)
+    heatmap = normalize_batch(heatmap)
+    heatmap = np.maximum(heatmap.cpu(), 0.3)
+
+    heatmap = heatmap.unsqueeze(1)
+    heatmap = torch.stack([resize_transform(img) for img in heatmap])
+    heatmap = heatmap.squeeze(1)
+
+    return heatmap
+
+
 def threshold_grad_cam(xbatch, ybatch, cam_model):
     pred = cam_model(xbatch)
     output = torch.sum(pred * ybatch)
