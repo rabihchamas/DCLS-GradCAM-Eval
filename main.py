@@ -15,7 +15,7 @@ args = Args()
 args.model_name = "convnext_tiny"
 # Valid explainers: "Threshold_GradCAM", "GradCAM"
 args.explainer = "Threshold_GradCAM"
-# If you want to test on all the dataset choose give 100
+# If you want to test on all the dataset give 100
 args.data_used_percentage = 0.25
 args.batch_size = 8
 
@@ -38,7 +38,7 @@ def main(arguments):
 
     batches = 52224 / args.batch_size
     batches = int((args.data_used_percentage / 100) * batches)
-    #Get interpretability score
+    #Get an interpretability score
     score = evaluate_clickme(model_cam, explainer=explainer, clickme_val_dataset=clickme_dataset.take(batches),
                              preprocess_inputs=transform)
     print(score)
