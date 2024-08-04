@@ -1,0 +1,11 @@
+numpy
+scipy
+torch
+torchvision
+tensorflow
+cv2
+pillow
+pathlib
+timm
+copy
+dcls
