@@ -61,7 +61,7 @@ We welcome contributions to improve the project. Please submit pull requests or 
 This project is licensed under the MIT License. See the `LICENSE` file for more details.
 
 ## Contact
-For any questions or inquiries, please contact Rabih Chamas at [rabih.chamas@lis-lab.fr](mailto:rabih.chamas@lis-lab.fr).
+For any questions or inquiries, please contact Rabih Chamas at [rabihchamas2@gmail.com](mailto:rabihchamas2@gmail.com).
 
 ## References
 - [DCLS: Dilated Convolution with Learnable Spacing](https://arxiv.org/abs/2112.03740)
